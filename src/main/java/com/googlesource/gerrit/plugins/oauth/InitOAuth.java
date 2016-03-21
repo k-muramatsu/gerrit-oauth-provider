@@ -19,6 +19,10 @@ import com.google.gerrit.pgm.init.api.InitStep;
 import com.google.gerrit.pgm.init.api.Section;
 import com.google.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import static org.slf4j.LoggerFactory.getLogger;
+
 class InitOAuth implements InitStep {
   static final String PLUGIN_SECTION = "plugin";
   static final String CLIENT_ID = "client-id";
@@ -33,6 +37,7 @@ class InitOAuth implements InitStep {
   private final Section googleOAuthProviderSection;
   private final Section githubOAuthProviderSection;
   private final Section bitbucketOAuthProviderSection;
+  private final Section redmineOAuthProviderSection;
 
   @Inject
   InitOAuth(ConsoleUI ui,
@@ -45,6 +50,8 @@ class InitOAuth implements InitStep {
         PLUGIN_SECTION, pluginName + GitHubOAuthService.CONFIG_SUFFIX);
     this.bitbucketOAuthProviderSection = sections.get(
         PLUGIN_SECTION, pluginName + BitbucketOAuthService.CONFIG_SUFFIX);
+	this.redmineOAuthProviderSection = sections.get(
+		PLUGIN_SECTION, pluginName + RedmineOAuthService.CONFIG_SUFFIX);
   }
 
   @Override
@@ -71,12 +78,19 @@ class InitOAuth implements InitStep {
     if (configureBitbucketOAuthProvider) {
       configureOAuth(bitbucketOAuthProviderSection);
     }
+
+	boolean configureRedmineOAuthProvider = ui.yesno(
+			true, "Use Redmine OAuth provider for Gerrit login ?");
+	if (configureRedmineOAuthProvider) {
+		configureOAuth(redmineOAuthProviderSection);
+	}
   }
 
   private void configureOAuth(Section s) {
     s.string("Application client id", CLIENT_ID, null);
     s.passwordForKey("Application client secret", CLIENT_SECRET);
   }
+
 
   @Override
   public void postRun() throws Exception {

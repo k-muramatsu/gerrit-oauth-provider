@@ -23,7 +23,6 @@ import com.google.gerrit.server.config.PluginConfigFactory;
 import com.google.inject.Inject;
 
 class HttpModule extends HttpPluginModule {
-
   private final PluginConfigFactory cfgFactory;
   private final String pluginName;
 
@@ -59,5 +58,14 @@ class HttpModule extends HttpPluginModule {
           .annotatedWith(Exports.named(BitbucketOAuthService.CONFIG_SUFFIX))
           .to(BitbucketOAuthService.class);
     }
+
+	cfg = cfgFactory.getFromGerritConfig(
+			pluginName + RedmineOAuthService.CONFIG_SUFFIX);
+	if (cfg.getString(InitOAuth.CLIENT_ID) != null) {
+		bind(OAuthServiceProvider.class)
+			.annotatedWith(Exports.named(RedmineOAuthService.CONFIG_SUFFIX))
+			.to(RedmineOAuthService.class);
+	} else {
+	}
   }
 }
