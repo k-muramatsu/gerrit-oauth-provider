@@ -59,6 +59,7 @@ class RedmineOAuthService implements OAuthServiceProvider {
 				.apiKey(cfg.getString(InitOAuth.CLIENT_ID))
 				.apiSecret(cfg.getString(InitOAuth.CLIENT_SECRET))
 				.callback(this.canonicalWebUrl + "oauth")
+				.debug()
 				.build();
 		
 	}
@@ -100,6 +101,7 @@ class RedmineOAuthService implements OAuthServiceProvider {
 
 	@Override
 		public OAuthToken getAccessToken(OAuthVerifier rv) {
+			log.info("get access token");
 			Verifier vi = new Verifier(rv.getValue());
 			Token to = service.getAccessToken(null, vi);
 			return new OAuthToken(to.getToken(), to.getSecret(), null);

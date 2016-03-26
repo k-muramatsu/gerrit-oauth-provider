@@ -112,6 +112,7 @@ class GitHubOAuthService implements OAuthServiceProvider {
 
   @Override
   public OAuthToken getAccessToken(OAuthVerifier rv) {
+  	log.info("Github get accesstoken");
     Verifier vi = new Verifier(rv.getValue());
     Token to = service.getAccessToken(null, vi);
     OAuthToken result = new OAuthToken(to.getToken(),

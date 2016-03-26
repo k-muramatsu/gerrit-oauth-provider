@@ -28,10 +28,11 @@ import org.slf4j.LoggerFactory;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class RedmineApi extends DefaultApi20 {
+	private static final Logger log = getLogger(RedmineApi.class);
 	private static final String AUTHORIZE_URL =
-		"http://192.168.1.10/redmine_2/oauth2/authorize_client?response_type=token&client_id=%s&redirect_uri=%s";
+		"http://192.168.1.10/redmine_2/oauth2/authorize_client?response_type=code&client_id=%s&redirect_uri=%s";
 	private static final String ACCESS_TOKEN_ENDPOINT =
-		"http://192.168.1.10/redmine_2/user/oauth_user_information";
+		"http://192.168.1.10/redmine_2/oauth2/verify_access";
 
 	public RedmineApi() {
 	}
@@ -45,8 +46,10 @@ public class RedmineApi extends DefaultApi20 {
 		public String getAccessTokenEndpoint() {
 			return ACCESS_TOKEN_ENDPOINT;
 		}
+/*
 	@Override
 		public OAuthService createService(OAuthConfig config) {
+			log.info("create service");
 			return new RedmineOAuthService(this, config);
 		}
 
@@ -71,6 +74,7 @@ public class RedmineApi extends DefaultApi20 {
 
 		@Override
 			public Token getAccessToken(Token token, Verifier verifier) {
+				log.info("get access token");
 				OAuthRequest request =
 					new OAuthRequest(api.getAccessTokenVerb(),
 							api.getAccessTokenEndpoint());
@@ -89,6 +93,7 @@ public class RedmineApi extends DefaultApi20 {
 
 		@Override
 			public Token getRequestToken() {
+				log.info("get request token");
 				throw new UnsupportedOperationException(
 						"Unsupported operation, please use 'getAuthorizationUrl' and redirect your users there");
 			}
@@ -116,7 +121,10 @@ public class RedmineApi extends DefaultApi20 {
 
 		@Override
 			public Token extract(String response) {
+				log.info("access token extract");
 				return new Token("", "");
 			}
 	}
+	*/
 }
+
