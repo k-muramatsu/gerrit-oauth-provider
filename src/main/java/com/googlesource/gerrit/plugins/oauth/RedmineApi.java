@@ -32,7 +32,7 @@ public class RedmineApi extends DefaultApi20 {
 	private static final String AUTHORIZE_URL =
 		"http://192.168.1.10/redmine_2/oauth2/authorize_client?response_type=code&client_id=%s&redirect_uri=%s";
 	private static final String ACCESS_TOKEN_ENDPOINT =
-		"http://192.168.1.10/redmine_2/oauth2/verify_access";
+		"http://192.168.1.10/redmine_2/oauth2/access_token";
 
 	public RedmineApi() {
 	}
@@ -46,7 +46,12 @@ public class RedmineApi extends DefaultApi20 {
 		public String getAccessTokenEndpoint() {
 			return ACCESS_TOKEN_ENDPOINT;
 		}
-/*
+
+	@Override
+		public Verb getAccessTokenVerb() {
+			return Verb.POST;
+		}
+
 	@Override
 		public OAuthService createService(OAuthConfig config) {
 			log.info("create service");
@@ -74,7 +79,6 @@ public class RedmineApi extends DefaultApi20 {
 
 		@Override
 			public Token getAccessToken(Token token, Verifier verifier) {
-				log.info("get access token");
 				OAuthRequest request =
 					new OAuthRequest(api.getAccessTokenVerb(),
 							api.getAccessTokenEndpoint());
@@ -82,18 +86,24 @@ public class RedmineApi extends DefaultApi20 {
 				request.addBodyParameter(OAuthConstants.CLIENT_SECRET,
 						config.getApiSecret());
 				request.addBodyParameter(OAuthConstants.CODE, verifier.getValue());
-				request.addBodyParameter(OAuthConstants.REDIRECT_URI,
-						config.getCallback());
+      			request.addBodyParameter(OAuthConstants.REDIRECT_URI, config.getCallback());
 				if (config.hasScope())
 					request.addBodyParameter(OAuthConstants.SCOPE, config.getScope());
 				request.addBodyParameter(GRANT_TYPE, GRANT_TYPE_VALUE);
 				Response response = request.send();
-				return api.getAccessTokenExtractor().extract(response.getBody());
+				//return api.getAccessTokenExtractor().extract(response.getBody());
+				if (response.getCode() == SC_OK) {
+					Token t = api.getAccessTokenExtractor().extract(response.getBody());
+					return new Token(t.getToken(), config.getApiSecret());
+				} else {
+					throw new OAuthException(
+							String.format("Error response received: %s, HTTP status: %s",
+								response.getBody(), response.getCode()));
+				}
 			}
 
 		@Override
 			public Token getRequestToken() {
-				log.info("get request token");
 				throw new UnsupportedOperationException(
 						"Unsupported operation, please use 'getAuthorizationUrl' and redirect your users there");
 			}
@@ -122,9 +132,22 @@ public class RedmineApi extends DefaultApi20 {
 		@Override
 			public Token extract(String response) {
 				log.info("access token extract");
-				return new Token("", "");
+				log.info("response: " + response);
+				JsonElement json = JSON.newGson().fromJson(response, JsonElement.class);
+				if (json.isJsonObject()) {
+					JsonObject jsonObject = json.getAsJsonObject();
+					JsonElement id = jsonObject.get(ACCESS_TOKEN);
+					if (id == null || id.isJsonNull()) {
+						throw new OAuthException(
+								"Response doesn't contain 'access_token' field");
+					}
+					JsonElement accessToken = jsonObject.get(ACCESS_TOKEN);
+					return new Token(accessToken.getAsString(), "");
+				} else {
+					throw new OAuthException(
+							String.format("Invalid JSON '%s': not a JSON Object", json));
+				}
 			}
 	}
-	*/
 }
 

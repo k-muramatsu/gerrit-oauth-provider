@@ -66,6 +66,7 @@ class RedmineOAuthService implements OAuthServiceProvider {
 
 	@Override
 		public OAuthUserInfo getUserInfo(OAuthToken token) throws IOException {
+			log.info("get user info");
 			OAuthRequest request = new OAuthRequest(Verb.GET, PROTECTED_RESOURCE_URL);
 			Token t = new Token(token.getToken(), token.getSecret(), token.getRaw());
 			service.signRequest(t, request);
