@@ -32,6 +32,7 @@ class InitOAuth implements InitStep {
   static final String DOMAIN = "domain";
   static final String USE_EMAIL_AS_USERNAME =
       "use-email-as-username";
+  static final String BASE_URL = "base-url";
 
   private final ConsoleUI ui;
   private final Section googleOAuthProviderSection;
@@ -83,12 +84,17 @@ class InitOAuth implements InitStep {
 			true, "Use Redmine OAuth provider for Gerrit login ?");
 	if (configureRedmineOAuthProvider) {
 		configureOAuth(redmineOAuthProviderSection);
+		configureBaseURLOAuth(redmineOAuthProviderSection);
 	}
   }
 
   private void configureOAuth(Section s) {
     s.string("Application client id", CLIENT_ID, null);
     s.passwordForKey("Application client secret", CLIENT_SECRET);
+  }
+
+  private void configureBaseURLOAuth(Section s) {
+    s.string("Application Base URL", BASE_URL, null);
   }
 
 

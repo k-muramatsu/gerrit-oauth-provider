@@ -43,7 +43,7 @@ class RedmineOAuthService implements OAuthServiceProvider {
 	private static final Logger log = getLogger(RedmineOAuthService.class);
 	static final String CONFIG_SUFFIX = "-redmine-oauth";
 	private static final String PROTECTED_RESOURCE_URL =
-	      "http://192.168.1.10/redmine_2/oauth2/oauth_user_information/";
+	      "http://k-com.asuscomm.com/redmine_2/oauth2/user";
 	private final OAuthService service;
 	private final String canonicalWebUrl;
 
@@ -55,18 +55,18 @@ class RedmineOAuthService implements OAuthServiceProvider {
 			        pluginName + CONFIG_SUFFIX);
 			this.canonicalWebUrl = CharMatcher.is('/').trimTrailingFrom(
 			        urlProvider.get()) + "/";
-			service = new ServiceBuilder().provider(RedmineApi.class)
+			String base_url = CharMatcher.is('/').trimTrailingFrom(cfg.getString(InitOAuth.BASE_URL));
+
+			service = new ServiceBuilder().provider(new RedmineApi(base_url))
 				.apiKey(cfg.getString(InitOAuth.CLIENT_ID))
 				.apiSecret(cfg.getString(InitOAuth.CLIENT_SECRET))
 				.callback(this.canonicalWebUrl + "oauth")
-				.debug()
 				.build();
 		
 	}
 
 	@Override
 		public OAuthUserInfo getUserInfo(OAuthToken token) throws IOException {
-			log.info("get user info");
 			OAuthRequest request = new OAuthRequest(Verb.GET, PROTECTED_RESOURCE_URL);
 			Token t = new Token(token.getToken(), token.getSecret(), token.getRaw());
 			service.signRequest(t, request);
@@ -82,18 +82,21 @@ class RedmineOAuthService implements OAuthServiceProvider {
 			}
 			if (userJson.isJsonObject()) {
 				JsonObject jsonObject = userJson.getAsJsonObject();
-				JsonObject userObject = jsonObject.getAsJsonObject("users");
+				JsonObject userObject = jsonObject.getAsJsonObject("user");
 				if (userObject == null || userObject.isJsonNull()) {
 					throw new IOException("Response doesn't contain 'user' field");
 				}
 				JsonElement usernameElement = userObject.get("id");
 				String username = usernameElement.getAsString();
 
-				JsonElement displayName = jsonObject.get("display_name");
-				return new OAuthUserInfo(username, username, null,
-						displayName == null || displayName.isJsonNull() ? null
-						: displayName.getAsString(),
-						null);
+				JsonElement displayName = userObject.get("login");
+				String disp_name = userObject.get("firstname") + " " + userObject.get("lastname");
+				return new OAuthUserInfo(
+							username, 
+							displayName.getAsString(), 
+							userObject.get("mail").getAsString(),
+							disp_name,
+							null);
 			} else {
 				throw new IOException(
 						String.format("Invalid JSON '%s': not a JSON Object", userJson));
@@ -102,7 +105,6 @@ class RedmineOAuthService implements OAuthServiceProvider {
 
 	@Override
 		public OAuthToken getAccessToken(OAuthVerifier rv) {
-			log.info("get access token");
 			Verifier vi = new Verifier(rv.getValue());
 			Token to = service.getAccessToken(null, vi);
 			return new OAuthToken(to.getToken(), to.getSecret(), null);

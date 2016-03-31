@@ -30,21 +30,23 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class RedmineApi extends DefaultApi20 {
 	private static final Logger log = getLogger(RedmineApi.class);
 	private static final String AUTHORIZE_URL =
-		"http://192.168.1.10/redmine_2/oauth2/authorize_client?response_type=code&client_id=%s&redirect_uri=%s";
+		"%s/oauth2/authorize_client?response_type=code_and_token&client_id=%s&redirect_uri=%s";
 	private static final String ACCESS_TOKEN_ENDPOINT =
-		"http://192.168.1.10/redmine_2/oauth2/access_token";
+		"%s/oauth2/access_token";
+	private String base_url;
 
-	public RedmineApi() {
+	public RedmineApi(String base_url) {
+		this.base_url = base_url;
 	}
 
 	@Override
 		public String getAuthorizationUrl(OAuthConfig config) {
-			return format(AUTHORIZE_URL, config.getApiKey(), encode(config.getCallback()));
+			return format(AUTHORIZE_URL, base_url, config.getApiKey(), encode(config.getCallback()));
 		}
 
 	@Override
 		public String getAccessTokenEndpoint() {
-			return ACCESS_TOKEN_ENDPOINT;
+			return format(ACCESS_TOKEN_ENDPOINT, base_url);
 		}
 
 	@Override
@@ -54,7 +56,6 @@ public class RedmineApi extends DefaultApi20 {
 
 	@Override
 		public OAuthService createService(OAuthConfig config) {
-			log.info("create service");
 			return new RedmineOAuthService(this, config);
 		}
 
@@ -91,7 +92,6 @@ public class RedmineApi extends DefaultApi20 {
 					request.addBodyParameter(OAuthConstants.SCOPE, config.getScope());
 				request.addBodyParameter(GRANT_TYPE, GRANT_TYPE_VALUE);
 				Response response = request.send();
-				//return api.getAccessTokenExtractor().extract(response.getBody());
 				if (response.getCode() == SC_OK) {
 					Token t = api.getAccessTokenExtractor().extract(response.getBody());
 					return new Token(t.getToken(), config.getApiSecret());
@@ -131,8 +131,6 @@ public class RedmineApi extends DefaultApi20 {
 
 		@Override
 			public Token extract(String response) {
-				log.info("access token extract");
-				log.info("response: " + response);
 				JsonElement json = JSON.newGson().fromJson(response, JsonElement.class);
 				if (json.isJsonObject()) {
 					JsonObject jsonObject = json.getAsJsonObject();
