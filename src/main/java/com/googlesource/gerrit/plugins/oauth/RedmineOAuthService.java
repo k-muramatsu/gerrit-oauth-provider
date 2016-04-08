@@ -37,15 +37,17 @@ import java.nio.charset.StandardCharsets;
 import static com.google.gerrit.server.OutputFormat.JSON;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.slf4j.LoggerFactory.getLogger;
+import static java.lang.String.format;
 
 @Singleton
 class RedmineOAuthService implements OAuthServiceProvider {
 	private static final Logger log = getLogger(RedmineOAuthService.class);
 	static final String CONFIG_SUFFIX = "-redmine-oauth";
 	private static final String PROTECTED_RESOURCE_URL =
-	      "http://k-com.asuscomm.com/redmine_2/oauth2/user";
+	      "%s/oauth2/user";
 	private final OAuthService service;
 	private final String canonicalWebUrl;
+	private final String base_url;
 
 	@Inject
 		RedmineOAuthService(PluginConfigFactory cfgFactory,
@@ -55,7 +57,7 @@ class RedmineOAuthService implements OAuthServiceProvider {
 			        pluginName + CONFIG_SUFFIX);
 			this.canonicalWebUrl = CharMatcher.is('/').trimTrailingFrom(
 			        urlProvider.get()) + "/";
-			String base_url = CharMatcher.is('/').trimTrailingFrom(cfg.getString(InitOAuth.BASE_URL));
+			base_url = CharMatcher.is('/').trimTrailingFrom(cfg.getString(InitOAuth.BASE_URL));
 
 			service = new ServiceBuilder().provider(new RedmineApi(base_url))
 				.apiKey(cfg.getString(InitOAuth.CLIENT_ID))
@@ -65,9 +67,13 @@ class RedmineOAuthService implements OAuthServiceProvider {
 		
 	}
 
+	private String getProtectedResourceUrl() {
+		return format(PROTECTED_RESOURCE_URL, base_url);
+	}
+
 	@Override
 		public OAuthUserInfo getUserInfo(OAuthToken token) throws IOException {
-			OAuthRequest request = new OAuthRequest(Verb.GET, PROTECTED_RESOURCE_URL);
+			OAuthRequest request = new OAuthRequest(Verb.GET, getProtectedResourceUrl());
 			Token t = new Token(token.getToken(), token.getSecret(), token.getRaw());
 			service.signRequest(t, request);
 			Response response = request.send();
