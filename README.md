@@ -10,6 +10,7 @@ Supported OAuth providers:
 * Bitbucket
 * GitHub
 * Google
+* Redmine (Use [Redmine plugin](https://github.com/k-muramatsu/redmine_oauth2_provider) as OAuth2 Provider)
 
 See the [Wiki](https://github.com/davido/gerrit-oauth-provider/wiki) what it can do for you.
 
